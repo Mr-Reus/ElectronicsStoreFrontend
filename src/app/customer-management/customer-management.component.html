@@ -1,0 +1,134 @@
+<div class="d-flex" id="wrapper">
+  <!-- Sidebar -->
+  <div class="bg-dark text-white sidebar" [class.collapsed]="isCollapsed">
+    <div class="sidebar-header d-flex justify-content-between align-items-center px-3 py-2">
+      <h5 class="mb-0">Menu</h5>
+      <button class="btn btn-sm btn-outline-light" (click)="toggleSidebar()">☰</button>
+    </div>
+    <nav class="nav flex-column px-3">
+      <!-- Only show these links to Admin/Support as needed -->
+    <a class="nav-link" routerLink="/admin-dashboard" *ngIf="hasRole('Admin')">Admin dashboard</a> 
+    <a class="nav-link" routerLink="/orders" *ngIf="hasRole('Admin') || hasRole('Manager') || hasRole('Employee')">Orders</a> 
+    <a class="nav-link" routerLink="/inventory" *ngIf="hasRole('Admin') || hasRole('Manager')">Inventory</a> 
+    <a class="nav-link" routerLink="/products" *ngIf="hasRole('Admin') || hasRole('Manager') || hasRole('Employee')">Products</a> 
+    <a class="nav-link" routerLink="/customer-management" *ngIf="hasRole('Admin') || hasRole('Support')">Customer management</a> 
+    <a class="nav-link" routerLink="/reporting" *ngIf="hasRole('Admin') || hasRole('Manager') || hasRole('Analyst')">Reporting</a> 
+    <a class="nav-link" routerLink="/audit-logs" *ngIf="hasRole('Admin')">Audit logs</a>
+    <a class="nav-link" routerLink="/dashboard">Back</a>
+      <hr class="bg-light">
+      <button class="btn btn-outline-danger w-100" (click)="logout()">Logout</button>
+    </nav>
+  </div>
+
+  <!-- Page Content -->
+  <div class="main-content flex-grow-1 p-4">
+    <!-- Welcome Card -->
+    <div class="welcome-card card shadow rounded p-4 mb-4">
+      <h2 class="text-primary">Customer Management</h2>
+      <p class="text-muted mb-1">Welcome, {{ currentUser?.username }}</p>
+      <p class="text-muted">Role: {{ currentUser?.role }}</p>
+    </div>
+
+    <!-- Summary Cards (Admin/Support only) -->
+    <div class="row g-4 mb-4" *ngIf="hasRole('Admin') || hasRole('Support')">
+      <div class="col-md-3">
+        <div class="card h-100 border-0 shadow rounded text-center p-3">
+          <h6 class="text-muted">Total Customers</h6>
+          <h3>{{ totalCustomers }}</h3>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card h-100 border-0 shadow rounded text-center p-3">
+          <h6 class="text-muted">Total Orders</h6>
+          <h3>{{ totalOrdersAcrossAll }}</h3>
+        </div>
+      </div>
+    </div>
+
+    <!-- “Add Customer” Button -->
+    <div class="row mb-3" *ngIf="hasRole('Admin') || hasRole('Support')">
+      <div class="col">
+        <button class="btn btn-primary" (click)="openCustomerModal()">Add Customer</button>
+      </div>
+    </div>
+
+    <!-- Customer Table -->
+    <div class="card p-3 mb-4">
+      <h5 class="mb-3">Customer List</h5>
+      <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle">
+          <thead>
+            <tr>
+              <th>Customer ID</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Order Count</th>
+              <th *ngIf="hasRole('Admin') || hasRole('Support')">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let cust of customers">
+              <td>{{ cust.customerID }}</td>
+              <td>{{ cust.firstName }} {{ cust.lastName }}</td>
+              <td>{{ cust.email }}</td>
+              <td>{{ cust.phoneNumber }}</td>
+              <td>{{ cust.orderCount }}</td>
+              <td *ngIf="hasRole('Admin') || hasRole('Support')">
+                <button class="btn btn-sm btn-info me-1" (click)="openCustomerModal(cust)">Edit</button>
+                <button class="btn btn-sm btn-danger" (click)="deleteCustomer(cust.customerID)">
+                  Delete
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="customers.length === 0">
+              <td colspan="6" class="text-center text-muted">No customers found.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Customer Modal -->
+<div *ngIf="showCustomerModal" class="modal fade show d-block" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ editMode ? 'Edit Customer' : 'Add Customer' }}</h5>
+        <button type="button" class="btn-close" aria-label="Close" (click)="closeCustomerModal()"></button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="customerForm" (ngSubmit)="onSubmitCustomer()">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">First Name</label>
+              <input type="text" class="form-control" formControlName="firstName" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Last Name</label>
+              <input type="text" class="form-control" formControlName="lastName" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-control" formControlName="email" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Phone Number</label>
+              <input type="text" class="form-control" formControlName="phoneNumber" />
+            </div>
+          </div>
+          <div class="text-end mt-4">
+            <button type="button" class="btn btn-secondary me-2" (click)="closeCustomerModal()">
+              Cancel
+            </button>
+            <button type="submit" class="btn btn-success">
+              {{ editMode ? 'Update Customer' : 'Create Customer' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

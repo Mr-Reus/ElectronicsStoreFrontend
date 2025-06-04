@@ -1,0 +1,88 @@
+<div class="d-flex admin-dashboard" id="wrapper">
+  <!-- Sidebar -->
+  <div class="bg-dark text-white sidebar" [class.collapsed]="isCollapsed">
+  <div class="sidebar-header d-flex justify-content-between align-items-center px-3 py-2">
+    <h5 class="mb-0">Menu</h5>
+    <button class="btn btn-sm btn-outline-light" (click)="toggleSidebar()">☰</button>
+  </div>
+
+  <nav class="nav flex-column px-3">
+    <!-- Dashboards -->
+    <a class="nav-link" routerLink="/admin-dashboard" *ngIf="hasRole('Admin')">Admin dashboard</a> 
+
+    <hr class="bg-light">
+
+    <!-- Functional Pages -->
+    <a class="nav-link" routerLink="/orders" *ngIf="hasRole('Admin') || hasRole('Manager') || hasRole('Employee')">Orders</a> 
+    <a class="nav-link" routerLink="/inventory" *ngIf="hasRole('Admin') || hasRole('Manager')">Inventory</a> 
+    <a class="nav-link" routerLink="/products" *ngIf="hasRole('Admin') || hasRole('Manager') || hasRole('Employee')">Products</a> 
+    <a class="nav-link" routerLink="/customer-management" *ngIf="hasRole('Admin') || hasRole('Support')">Customer management</a> 
+    <a class="nav-link" routerLink="/reporting" *ngIf="hasRole('Admin') || hasRole('Manager') || hasRole('Analyst')">Reporting</a> 
+    <a class="nav-link" routerLink="/audit-logs" *ngIf="hasRole('Admin')">Audit logs</a>
+
+    <hr class="bg-light">
+    <button class="btn btn-outline-danger w-100" (click)="logout()">Logout</button>
+  </nav>
+</div>
+
+  <!-- Page Content -->
+  <div class="main-content flex-grow-1 p-4">
+    <div class="welcome-card card shadow rounded p-4 mb-4">
+      <h2 class="text-primary">Welcome, {{ currentUser?.username }}</h2>
+      <p class="text-muted mb-1">Business process: sales and order management</p>
+      <p class="text-muted">Role: {{ currentUser?.role }}</p>
+    </div>
+
+    <!-- Dynamic role-based dashboard cards (same as before) -->
+    <div class="row g-4">
+      <div class="col-md-4" *ngIf="hasRole('Admin')">
+        <div class="card h-100 border-0 shadow rounded text-center p-3">
+          <img src="https://picsum.photos/seed/adminpanel/400/150" class="img-fluid mb-3" alt="Admin Panel" />
+          <h5 class="card-title">Admin panel</h5>
+          <p class="card-text">Access all settings, logs and users.</p>
+          <a routerLink="/admin-dashboard" class="btn btn-primary">Go</a>
+        </div>
+      </div>
+    
+<div class="col-md-4" *ngIf="hasRole('Manager')">
+    <div class="card h-100 border-0 shadow rounded text-center p-3">
+      <img src="https://picsum.photos/seed/manager/400/150" class="img-fluid mb-3" alt="Manager Dashboard">
+      <h5 class="card-title">Manager area</h5>
+      <p class="card-text">Handle inventory, orders and analytics.</p>
+      <a routerLink="/manager-dashboard" class="btn btn-primary">Go</a>
+    </div>
+  </div>
+
+  <!-- Employee -->
+  <div class="col-md-4" *ngIf="hasRole('Employee')">
+    <div class="card h-100 border-0 shadow rounded text-center p-3">
+      <img  src="https://picsum.photos/seed/employee/400/150" class="img-fluid mb-3" alt="Employee Dashboard">
+      <h5 class="card-title">Employee panel</h5>
+      <p class="card-text">Process and view customer orders.</p>
+      <a routerLink="/employee-dashboard" class="btn btn-primary">Go</a>
+    </div>
+  </div>
+
+  <!-- Support -->
+  <div class="col-md-4" *ngIf="hasRole('Support')">
+    <div class="card h-100 border-0 shadow rounded text-center p-3">
+      <img src="https://picsum.photos/seed/support/400/150" class="img-fluid mb-3" alt="Support Dashboard">
+      <h5 class="card-title">Support team</h5>
+      <p class="card-text">Manage user accounts and support issues.</p>
+      <a routerLink="/support-dashboard" class="btn btn-primary">Go</a>
+    </div>
+  </div>
+
+  <!-- Analyst -->
+  <div class="col-md-4" *ngIf="hasRole('Analyst')">
+    <div class="card h-100 border-0 shadow rounded text-center p-3">
+      <img src="https://picsum.photos/seed/analytics/400/150" class="img-fluid mb-3" alt="Analyst Dashboard">
+      <h5 class="card-title">Analytics zone</h5>
+      <p class="card-text">View read-only reports and insights.</p>
+      <a routerLink="/analytics-dashboard" class="btn btn-primary">Go</a>
+    </div>
+  </div>
+
+    </div>
+  </div>
+</div>

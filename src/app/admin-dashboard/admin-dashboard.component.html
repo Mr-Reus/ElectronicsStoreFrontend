@@ -1,0 +1,132 @@
+<div class="d-flex" id="wrapper">
+  <!-- Sidebar -->
+  <div class="bg-dark text-white sidebar" [class.collapsed]="isCollapsed">
+    <div class="sidebar-header d-flex justify-content-between align-items-center px-3 py-2">
+      <h5 class="mb-0">Menu</h5>
+      <button class="btn btn-sm btn-outline-light" (click)="toggleSidebar()">☰</button>
+    </div>
+    <nav class="nav flex-column px-3">
+      <a class="nav-link" routerLink="/admin-dashboard">Admin dashboard</a>
+      <a class="nav-link" routerLink="/customer-management">Customer management</a>
+      <a class="nav-link" routerLink="/orders" *ngIf="hasRole('Admin') || hasRole('Manager') || hasRole('Employee')">Orders</a>
+      <a class="nav-link" routerLink="/products" *ngIf="hasRole('Admin') || hasRole('Manager')">Products</a>
+      <a class="nav-link" routerLink="/inventory" *ngIf="hasRole('Admin') || hasRole('Manager')">Inventory</a> 
+      <a class="nav-link" routerLink="/reporting">Reporting</a>
+      <a class="nav-link" routerLink="/audit-logs">Audit logs</a>
+      <a class="nav-link" routerLink="/dashboard">Back</a>
+      <hr class="bg-light">
+      <button class="btn btn-outline-danger w-100" (click)="logout()">Logout</button>
+    </nav>
+  </div>
+
+  <!-- Page Content -->
+  <div class="main-content flex-grow-1 p-4">
+    <div class="welcome-card card shadow rounded p-4 mb-4">
+      <h2 class="text-primary">Admin dashboard</h2>
+      <p class="text-muted">Manage users, roles, and monitor system activities.</p>
+    </div>
+
+    <!-- Add User Button -->
+    <div class="row mb-3">
+      <div class="col">
+        <button class="btn btn-primary" (click)="openUserModal()">Add user</button>
+      </div>
+    </div>
+
+     <div class="row mb-3">
+      <div class="col">
+        <span class="me-2">Export data as:</span>
+        <button class="btn btn-outline-secondary btn-sm me-1" (click)="onExport('csv')">CSV</button>
+        <button class="btn btn-outline-secondary btn-sm me-1" (click)="onExport('xml')">XML</button>
+        <button class="btn btn-outline-secondary btn-sm me-1" (click)="onExport('json')">JSON</button>
+        <button class="btn btn-outline-secondary btn-sm" (click)="onExport('rdf')">RDF</button>
+      </div>
+    </div>
+    <!-- User Table -->
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card p-3 mb-4">
+          <h5 class="mb-3">Users</h5>
+          <table class="table table-bordered table-hover">
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let user of users">
+                <td>{{ user.username }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ getRoleName(user.roleId) }}</td>
+                <td>
+                  <button class="btn btn-sm btn-info me-1" (click)="openUserModal(user)">Edit</button>
+                  <button class="btn btn-sm btn-danger" (click)="deleteUser(user)">Delete</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create/Edit User Modal -->
+<div *ngIf="showUserModal" class="modal fade show d-block" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ editMode ? 'Edit User' : 'Add User' }}</h5>
+        <button type="button" class="btn-close" aria-label="Close" (click)="closeUserModal()"></button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="userForm" (ngSubmit)="onSubmit()">
+          <div class="mb-3">
+            <label class="form-label">Username</label>
+            <input type="text" class="form-control" formControlName="username" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-control" formControlName="email" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Password</label>
+            <input type="password" class="form-control" formControlName="passwordHash" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Role</label>
+            <select class="form-select" formControlName="roleId">
+              <option *ngFor="let role of roles" [value]="role.roleId">
+                {{ role.roleName }}
+              </option>
+            </select>
+          </div>
+          <div class="text-end">
+            <button type="button" class="btn btn-secondary me-2" (click)="closeUserModal()">Cancel</button>
+            <button type="submit" class="btn btn-success">
+              {{ editMode ? 'Update' : 'Create' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<ng-template #deleteModalTpl>
+  <div class="modal-header">
+    <h5 class="modal-title">Confirm deletion</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="deleteModalRef?.dismiss()"></button>
+  </div>
+  <div class="modal-body text-center">
+    Are you sure you want to delete <strong>{{ selectedUser?.username }}</strong>?
+  </div>
+  <div class="modal-footer justify-content-center">
+    <button class="btn btn-secondary" (click)="deleteModalRef?.dismiss()">Cancel</button>
+    <button class="btn btn-danger" (click)="confirmDelete()">Delete</button>
+  </div>
+</ng-template>

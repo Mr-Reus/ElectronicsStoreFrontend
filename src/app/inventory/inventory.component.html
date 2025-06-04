@@ -1,0 +1,151 @@
+<div class="d-flex" id="wrapper">
+  <!-- Sidebar -->
+  <div class="bg-dark text-white sidebar" [class.collapsed]="isCollapsed">
+    <div class="sidebar-header d-flex justify-content-between align-items-center px-3 py-2">
+      <h5 class="mb-0">Menu</h5>
+      <button class="btn btn-sm btn-outline-light" (click)="toggleSidebar()">☰</button>
+    </div>
+    <nav class="nav flex-column px-3">
+     <a class="nav-link" routerLink="/admin-dashboard" *ngIf="hasRole('Admin')">Admin dashboard</a> 
+    <a class="nav-link" routerLink="/orders" *ngIf="hasRole('Admin') || hasRole('Manager') || hasRole('Employee')">Orders</a> 
+    <a class="nav-link" routerLink="/inventory" *ngIf="hasRole('Admin') || hasRole('Manager')">Inventory</a> 
+    <a class="nav-link" routerLink="/products" *ngIf="hasRole('Admin') || hasRole('Manager') || hasRole('Employee')">Products</a> 
+    <a class="nav-link" routerLink="/customer-management" *ngIf="hasRole('Admin') || hasRole('Support')">Customer management</a> 
+    <a class="nav-link" routerLink="/reporting" *ngIf="hasRole('Admin') || hasRole('Manager') || hasRole('Analyst')">Reporting</a> 
+    <a class="nav-link" routerLink="/audit-logs" *ngIf="hasRole('Admin')">Audit logs</a>
+    <a class="nav-link" routerLink="/dashboard">Back</a>
+      <hr class="bg-light">
+      <button class="btn btn-outline-danger w-100" (click)="logout()">Logout</button>
+    </nav>
+  </div>
+
+  <!-- Page Content -->
+  <div class="main-content flex-grow-1 p-4">
+    <!-- Welcome Card -->
+    <div class="welcome-card card shadow rounded p-4 mb-4">
+      <h2 class="text-primary">Inventory Management</h2>
+      <p class="text-muted mb-1">Welcome, {{ currentUser?.username }}</p>
+      <p class="text-muted">Role: {{ currentUser?.role }}</p>
+    </div>
+
+    <!-- Summary Cards (Managers only) -->
+    <div class="row g-4 mb-4" *ngIf="hasRole('Manager')">
+      <div class="col-md-3">
+        <div class="card h-100 border-0 shadow rounded text-center p-3">
+          <h6 class="text-muted">Total Products</h6>
+          <h3>{{ totalProducts }}</h3>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card h-100 border-0 shadow rounded text-center p-3">
+          <h6 class="text-muted">Low Stock Items</h6>
+          <h3>{{ lowStockCount }}</h3>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inventory Table & Actions -->
+    <div class="card p-3 mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">Current Inventory</h5>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle">
+          <thead>
+            <tr>
+              <th>Product ID</th>
+              <th>Product Name</th>
+              <th>Supplier</th>
+              <th>Category</th>
+              <th>Price</th>
+              <th>Quantity In Stock</th>
+              <th>Last Updated</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of inventory">
+              <td>{{ item.productId }}</td>
+              <td>{{ item.productName }}</td>
+              <td>{{ item.supplierName }}</td>
+              <td>{{ item.category }}</td>
+              <td>{{ item.price | currency }}</td>
+              <td>{{ item.quantityInStock }}</td>
+              <td>{{ item.lastUpdated | date:'short' }}</td>
+              <td>
+                <button
+                  class="btn btn-sm btn-info"
+                  (click)="openAdjustModal(item)"
+                >
+                  Adjust Stock
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="inventory.length === 0">
+              <td colspan="8" class="text-center text-muted">No inventory found.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Adjust Stock Modal -->
+<div
+  *ngIf="showAdjustModal"
+  class="modal fade show d-block"
+  tabindex="-1"
+  role="dialog"
+>
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          Adjust Stock for {{ selectedItem?.productName }}
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          aria-label="Close"
+          (click)="closeAdjustModal()"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="adjustForm" (ngSubmit)="onSubmitAdjust()">
+          <div class="mb-3">
+            <label class="form-label">New Quantity</label>
+            <input
+              type="number"
+              class="form-control"
+              formControlName="quantityInStock"
+              min="0"
+            />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Last Updated</label>
+            <input
+              type="datetime-local"
+              class="form-control"
+              formControlName="lastUpdated"
+            />
+          </div>
+          <div class="text-end">
+            <button
+              type="button"
+              class="btn btn-secondary me-2"
+              (click)="closeAdjustModal()"
+            >
+              Cancel
+            </button>
+            <button type="submit" class="btn btn-success">
+              Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+

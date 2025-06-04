@@ -1,0 +1,158 @@
+<!-- products.component.html -->
+<div class="d-flex" id="wrapper">
+  <!-- Sidebar -->
+  <div class="bg-dark text-white sidebar" [class.collapsed]="isCollapsed">
+    <div class="sidebar-header d-flex justify-content-between align-items-center px-3 py-2">
+      <h5 class="mb-0">Menu</h5>
+      <button class="btn btn-sm btn-outline-light" (click)="toggleSidebar()">☰</button>
+    </div>
+    <nav class="nav flex-column px-3">
+    <a class="nav-link" routerLink="/admin-dashboard" *ngIf="hasRole('Admin')">Admin dashboard</a> 
+    <a class="nav-link" routerLink="/orders" *ngIf="hasRole('Admin') || hasRole('Manager') || hasRole('Employee')">Orders</a> 
+    <a class="nav-link" routerLink="/inventory" *ngIf="hasRole('Admin') || hasRole('Manager')">Inventory</a> 
+    <a class="nav-link" routerLink="/products" *ngIf="hasRole('Admin') || hasRole('Manager') || hasRole('Employee')">Products</a> 
+    <a class="nav-link" routerLink="/customer-management" *ngIf="hasRole('Admin') || hasRole('Support')">Customer management</a> 
+    <a class="nav-link" routerLink="/reporting" *ngIf="hasRole('Admin') || hasRole('Manager') || hasRole('Analyst')">Reporting</a> 
+    <a class="nav-link" routerLink="/audit-logs" *ngIf="hasRole('Admin')">Audit logs</a>
+    <a class="nav-link" routerLink="/dashboard">Back</a>
+      <hr class="bg-light">
+      <button class="btn btn-outline-danger w-100" (click)="logout()">Logout</button>
+    </nav>
+  </div>
+
+  <!-- Page Content -->
+  <div class="main-content flex-grow-1 p-4">
+    <!-- Welcome Card -->
+    <div class="welcome-card card shadow rounded p-4 mb-4">
+      <h2 class="text-primary">Products</h2>
+      <p class="text-muted mb-1">Welcome, {{ currentUser?.username }}</p>
+      <p class="text-muted">Role: {{ currentUser?.role }}</p>
+    </div>
+
+    <!-- “Add Product” button (Managers/Admin only) -->
+    <div class="row mb-3">
+      <div class="col">
+        <button
+          *ngIf="hasRole('Manager') || hasRole('Admin')"
+          class="btn btn-primary"
+          (click)="openProductModal()"
+        >
+          Add Product
+        </button>
+      </div>
+    </div>
+
+    <!-- Products Table -->
+    <div class="card p-3 mb-4">
+      <h5 class="mb-3">Product List</h5>
+      <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle">
+          <thead>
+            <tr>
+              <th>Product ID</th>
+              <th>Name</th>
+              <th>Category</th>
+              <th>Brand</th>
+              <th>Supplier</th>
+              <th>Price</th>
+              <th *ngIf="hasRole('Manager') || hasRole('Admin')">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let p of products">
+              <td>{{ p.productID }}</td>
+              <td>{{ p.name }}</td>
+              <td>{{ p.category }}</td>
+              <td>{{ p.brand }}</td>
+              <td>{{ p.supplierName }}</td>
+              <td>{{ p.price | currency }}</td>
+              <td *ngIf="hasRole('Manager') || hasRole('Admin')">
+                <button class="btn btn-sm btn-info me-1" (click)="openProductModal(p)">
+                  Edit
+                </button>
+                <button class="btn btn-sm btn-danger" (click)="deleteProduct(p.productID)">
+                  Delete
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="products.length === 0">
+              <td colspan="7" class="text-center text-muted">No products found.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Product Modal -->
+<div
+  *ngIf="showProductModal"
+  class="modal fade show d-block"
+  tabindex="-1"
+  role="dialog"
+>
+  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          {{ editMode ? 'Edit Product' : 'Add New Product' }}
+        </h5>
+        <button type="button" class="btn-close" aria-label="Close" (click)="closeProductModal()"></button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="productForm" (ngSubmit)="onSubmitProduct()">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Name</label>
+              <input type="text" class="form-control" formControlName="name" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Category</label>
+              <input type="text" class="form-control" formControlName="category" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Brand</label>
+              <input type="text" class="form-control" formControlName="brand" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Supplier</label>
+              <select class="form-select" formControlName="supplierID">
+                <option [ngValue]="null" disabled selected>-- Select Supplier --</option>
+                <option *ngFor="let s of suppliers" [ngValue]="s.supplierID">
+                  {{ s.name }}
+                </option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Price</label>
+              <input
+                type="number"
+                class="form-control"
+                formControlName="price"
+                min="0"
+                step="0.01"
+              />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Description</label>
+              <textarea
+                class="form-control"
+                formControlName="description"
+                rows="2"
+              ></textarea>
+            </div>
+          </div>
+          <div class="text-end mt-4">
+            <button type="button" class="btn btn-secondary me-2" (click)="closeProductModal()">
+              Cancel
+            </button>
+            <button type="submit" class="btn btn-success">
+              {{ editMode ? 'Update Product' : 'Create Product' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

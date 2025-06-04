@@ -1,0 +1,39 @@
+<div class="d-flex" id="wrapper">
+  <!-- Sidebar -->
+  <div class="bg-dark text-white sidebar" [class.collapsed]="isCollapsed">
+    <div class="sidebar-header d-flex justify-content-between align-items-center px-3 py-2">
+      <h5 class="mb-0">Menu</h5>
+      <button class="btn btn-sm btn-outline-light" (click)="toggleSidebar()">☰</button>
+    </div>
+    <nav class="nav flex-column px-3">
+      <!-- Only Admins, Managers, and Analysts can access reporting -->
+      <a class="nav-link" routerLink="/dashboard" *ngIf="hasRole('Admin') || hasRole('Manager') || hasRole('Analyst')">
+        Dashboard
+      </a>
+      <a class="nav-link active" routerLink="/reporting" *ngIf="hasRole('Admin') || hasRole('Manager') || hasRole('Analyst')">
+        Reporting
+      </a>
+      <a class="nav-link" routerLink="/dashboard">Back</a>
+      <hr class="bg-light">
+      <button class="btn btn-outline-danger w-100" (click)="logout()">Logout</button>
+    </nav>
+  </div>
+
+  <!-- Page Content -->
+  <div class="main-content flex-grow-1 p-4">
+    <!-- Welcome Card -->
+    <div class="welcome-card card shadow rounded p-4 mb-4">
+      <h2 class="text-primary">Reporting</h2>
+      <p class="text-muted mb-1">Welcome, {{ currentUser?.username }}</p>
+      <p class="text-muted">Role: {{ currentUser?.role }}</p>
+    </div>
+
+    <!-- Power BI embed (single, for all allowed roles) -->
+    <div *ngIf="hasRole('Admin') || hasRole('Manager') || hasRole('Analyst')" class="card p-3 mb-4">
+      <h5 class="mb-3">Power BI Dashboard</h5>
+      <div id="powerbi-container" class="powerbi-placeholder">
+        <iframe title="coursework_db" width="100%" height="100%" src="https://app.powerbi.com/view?r=eyJrIjoiOTYxNTZmOTktM2EwNS00ZTExLWEyZTMtZTI4Y2I1ZTlhN2VkIiwidCI6IjI5NDk1ZDlhLTJmMjQtNDQyNi1iYmQ0LTE4MTM4ZDU1NWI1NiIsImMiOjl9" frameborder="0" allowFullScreen="true"></iframe>
+      </div>
+    </div>
+  </div>
+</div>

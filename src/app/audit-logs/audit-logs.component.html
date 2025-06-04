@@ -1,0 +1,72 @@
+<!-- audit-logs.component.html -->
+<div class="d-flex" id="wrapper">
+  <!-- Sidebar -->
+  <div class="bg-dark text-white sidebar" [class.collapsed]="isCollapsed">
+    <div class="sidebar-header d-flex justify-content-between align-items-center px-3 py-2">
+      <h5 class="mb-0">Menu</h5>
+      <button class="btn btn-sm btn-outline-light" (click)="toggleSidebar()">☰</button>
+    </div>
+    <nav class="nav flex-column px-3">
+    <a class="nav-link" routerLink="/admin-dashboard" *ngIf="hasRole('Admin')">Admin dashboard</a> 
+    <a class="nav-link" routerLink="/orders" *ngIf="hasRole('Admin') || hasRole('Manager') || hasRole('Employee')">Orders</a> 
+    <a class="nav-link" routerLink="/inventory" *ngIf="hasRole('Admin') || hasRole('Manager')">Inventory</a> 
+    <a class="nav-link" routerLink="/products" *ngIf="hasRole('Admin') || hasRole('Manager') || hasRole('Employee')">Products</a> 
+    <a class="nav-link" routerLink="/customer-management" *ngIf="hasRole('Admin') || hasRole('Support')">Customer management</a> 
+    <a class="nav-link" routerLink="/reporting" *ngIf="hasRole('Admin') || hasRole('Manager') || hasRole('Analyst')">Reporting</a> 
+    <a class="nav-link" routerLink="/audit-logs" *ngIf="hasRole('Admin')">Audit logs</a>
+    <a class="nav-link" routerLink="/dashboard">Back</a>
+      <hr class="bg-light">
+      <button class="btn btn-outline-danger w-100" (click)="logout()">Logout</button>
+    </nav>
+  </div>
+
+  <!-- Page Content -->
+  <div class="main-content flex-grow-1 p-4">
+    <div class="welcome-card card shadow rounded p-4 mb-4">
+      <h2 class="text-primary">Audit logs</h2>
+      <p class="text-muted">Track user actions in the system</p>
+    </div>
+
+    <div class="card p-3 table-section">
+      <div class="d-flex justify-content-between mb-3">
+        <input type="text" class="form-control w-25" placeholder="Search..." [(ngModel)]="filterText" (ngModelChange)="applyFilter()" />
+        <button class="btn btn-outline-secondary" (click)="refresh()">Refresh</button>
+      </div>
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th (click)="sort('logID')">ID <span [ngClass]="sortIcon('logID')"></span></th>
+            <th (click)="sort('username')">Username <span [ngClass]="sortIcon('username')"></span></th>
+            <th (click)="sort('action')">Action <span [ngClass]="sortIcon('action')"></span></th>
+            <th (click)="sort('tableName')">Table <span [ngClass]="sortIcon('tableName')"></span></th>
+            <th (click)="sort('recordID')">Record ID <span [ngClass]="sortIcon('recordID')"></span></th>
+            <th (click)="sort('timestamp')">Timestamp <span [ngClass]="sortIcon('timestamp')"></span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let log of pagedLogs">
+            <td>{{ log.logID }}</td>
+            <td>{{ log.username }}</td>
+            <td>{{ log.action }}</td>
+            <td>{{ log.tableName }}</td>
+            <td>{{ log.recordID || '-' }}</td>
+            <td>{{ log.timestamp | date:'short' }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+          <li class="page-item" [class.disabled]="currentPage===1">
+            <a class="page-link" (click)="changePage(currentPage-1)">&laquo;</a>
+          </li>
+          <li class="page-item" *ngFor="let page of pagesArray" [class.active]="page===currentPage">
+            <a class="page-link" (click)="changePage(page)">{{ page }}</a>
+          </li>
+          <li class="page-item" [class.disabled]="currentPage===totalPages">
+            <a class="page-link" (click)="changePage(currentPage+1)">&raquo;</a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>

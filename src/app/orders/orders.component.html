@@ -1,0 +1,224 @@
+<!-- orders.component.html -->
+<div class="d-flex" id="wrapper">
+  <!-- Sidebar -->
+  <div class="bg-dark text-white sidebar" [class.collapsed]="isCollapsed">
+    <div class="sidebar-header d-flex justify-content-between align-items-center px-3 py-2">
+      <h5 class="mb-0">Menu</h5>
+      <button class="btn btn-sm btn-outline-light" (click)="toggleSidebar()">☰</button>
+    </div>
+    <nav class="nav flex-column px-3">
+    <a class="nav-link" routerLink="/admin-dashboard" *ngIf="hasRole('Admin')">Admin dashboard</a> 
+    <a class="nav-link" routerLink="/orders" *ngIf="hasRole('Admin') || hasRole('Manager') || hasRole('Employee')">Orders</a> 
+    <a class="nav-link" routerLink="/inventory" *ngIf="hasRole('Admin') || hasRole('Manager')">Inventory</a> 
+    <a class="nav-link" routerLink="/products" *ngIf="hasRole('Admin') || hasRole('Manager') || hasRole('Employee')">Products</a> 
+    <a class="nav-link" routerLink="/customer-management" *ngIf="hasRole('Admin') || hasRole('Support')">Customer management</a> 
+    <a class="nav-link" routerLink="/reporting" *ngIf="hasRole('Admin') || hasRole('Manager') || hasRole('Analyst')">Reporting</a> 
+    <a class="nav-link" routerLink="/audit-logs" *ngIf="hasRole('Admin')">Audit logs</a>
+    <a class="nav-link" routerLink="/dashboard">Back</a>
+      <hr class="bg-light">
+      <button class="btn btn-outline-danger w-100" (click)="logout()">Logout</button>
+    </nav>
+  </div>
+
+  <!-- Page Content -->
+  <div class="main-content flex-grow-1 p-4">
+    <!-- Welcome Card -->
+    <div class="welcome-card card shadow rounded p-4 mb-4">
+      <h2 class="text-primary">Orders</h2>
+      <p class="text-muted mb-1">Welcome, {{ currentUser?.username }}</p>
+      <p class="text-muted">Role: {{ currentUser?.role }}</p>
+    </div>
+
+    <!-- Summary Cards (Managers only) -->
+    <div class="row g-4 mb-4" *ngIf="hasRole('Manager')">
+      <div class="col-md-3">
+        <div class="card h-100 border-0 shadow rounded text-center p-3">
+          <h6 class="text-muted">Total Orders</h6>
+          <h3>{{ totalOrders }}</h3>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card h-100 border-0 shadow rounded text-center p-3">
+          <h6 class="text-muted">Total Revenue</h6>
+          <h3>{{ totalRevenue | currency }}</h3>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card h-100 border-0 shadow rounded text-center p-3">
+          <h6 class="text-muted">Pending Orders</h6>
+          <h3>{{ pendingOrders }}</h3>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card h-100 border-0 shadow rounded text-center p-3">
+          <h6 class="text-muted">Completed Orders</h6>
+          <h3>{{ completedOrders }}</h3>
+        </div>
+      </div>
+    </div>
+
+    <!-- Orders Table & Actions -->
+    <div class="card p-3 mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">Order List</h5>
+        <!-- Employees can add new orders -->
+        <button
+          *ngIf="hasRole('Employee')"
+          class="btn btn-primary"
+          (click)="openOrderModal()"
+        >
+          Add Order
+        </button>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Date</th>
+              <th>Customer</th>
+              <th>Product</th>
+              <th>Quantity</th>
+              <th>Total Amount</th>
+              <th>Payment Status</th>
+              <th *ngIf="hasRole('Employee')">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let order of orders">
+              <td>{{ order.orderId }}</td>
+              <td>{{ order.orderDate | date: 'short' }}</td>
+              <td>{{ order.customerName }}</td>
+              <td>{{ order.productName }}</td>
+              <td>{{ order.quantity }}</td>
+              <td>{{ order.totalAmount | currency }}</td>
+              <td>
+                <span
+                  class="badge"
+                  [ngClass]="{
+                    'bg-warning': order.paymentStatus === 'Pending',
+                    'bg-success': order.paymentStatus === 'Paid',
+                    'bg-danger': order.paymentStatus === 'Failed'
+                  }"
+                >
+                  {{ order.paymentStatus }}
+                </span>
+              </td>
+              <td *ngIf="hasRole('Employee')">
+                <button
+                  class="btn btn-sm btn-info me-1"
+                  (click)="openOrderModal(order)"
+                >
+                  Edit
+                </button>
+                <button
+                  class="btn btn-sm btn-danger"
+                  (click)="deleteOrder(order)"
+                >
+                  Delete
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="orders.length === 0">
+              <td colspan="8" class="text-center text-muted">No orders found.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Order Modal -->
+<div
+  *ngIf="showOrderModal"
+  class="modal fade show d-block"
+  tabindex="-1"
+  role="dialog"
+>
+  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          {{ editOrderMode ? 'Edit Order' : 'Add New Order' }}
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          aria-label="Close"
+          (click)="closeOrderModal()"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="orderForm" (ngSubmit)="onSubmitOrder()">
+          <div class="row g-3">
+  <!-- Customer dropdown -->
+  <div class="col-md-6">
+    <label class="form-label">Customer</label>
+    <select class="form-select" formControlName="customerID">
+      <!-- Placeholder; sets form control to null until user picks -->
+      <option [ngValue]="null" disabled selected>-- Select Customer --</option>
+      <!-- Each option’s value becomes the actual number (customerId) -->
+      <option *ngFor="let c of customers" [ngValue]="c.customerID">
+        {{ c.firstName }} {{ c.lastName }}
+      </option>
+    </select>
+  </div>
+
+  <!-- Product dropdown -->
+  <div class="col-md-6">
+    <label class="form-label">Product</label>
+    <select class="form-select" formControlName="productID">
+      <option [ngValue]="null" disabled selected>-- Select Product --</option>
+      <option *ngFor="let p of products" [ngValue]="p.productID">
+        {{ p.name }}
+      </option>
+    </select>
+  </div>
+
+  <!-- The rest of your fields… -->
+  <div class="col-md-4">
+    <label class="form-label">Quantity</label>
+    <input
+      type="number"
+      class="form-control"
+      formControlName="quantity"
+      min="1"
+    />
+  </div>
+  <div class="col-md-4">
+    <label class="form-label">Order Date</label>
+    <input
+      type="datetime-local"
+      class="form-control"
+      formControlName="orderDate"
+    />
+  </div>
+  <div class="col-md-4">
+    <label class="form-label">Payment Status</label>
+    <select class="form-select" formControlName="paymentStatus">
+      <option value="Pending">Pending</option>
+      <option value="Paid">Paid</option>
+      <option value="Failed">Failed</option>
+    </select>
+  </div>
+</div>
+
+          <div class="text-end mt-4">
+            <button
+              type="button"
+              class="btn btn-secondary me-2"
+              (click)="closeOrderModal()"
+            >
+              Cancel
+            </button>
+            <button type="submit" class="btn btn-success">
+              {{ editOrderMode ? 'Update Order' : 'Create Order' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
